@@ -91,10 +91,22 @@ def create_notification(message):
         bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения:')
         bot.register_next_step_handler(message, set_time)
 
-    if user_in_data and have_notification: # есть напоминания
-        has_all_commands = True
+    if user_in_data and have_notification:        # есть напоминания
+        all_commands = ['create', 'edit', 'delete']
     elif user_in_data and not(have_notification): # нет напоминаний
-        pass
+        all_commands = ['delete']
+
+    if message.text in all_commands: # Проверка на доступные пользователю комманды
+        if message.text == 'create':
+            bot.send_message(message.chat.id, 'Вы можете выбрать следующее время: \n \n' # Высылается весь список, когда можно отправить оповещение
+                                              'Понедельник, Вторник, Среда, Четверг, Пятница, Суббота, Воскресенье, Каждый день')
+            bot.register_next_step_handler(message, add_notification)
+            DB.add_notification_to_notifications(message.chat.id, message.text)
+    else:
+        bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
+
+def add_notification(message):
+    pass
 
 def set_time(message):
     DB = Database(DATA)
