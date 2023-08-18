@@ -1,4 +1,5 @@
 Test.py
 ToDoList
-Database/EX.db
 Structure
+Database/EX.db
+Settings/TOKEN.env

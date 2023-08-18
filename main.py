@@ -1,8 +1,13 @@
 import telebot
+import os
 from telebot import types
 from db import Database
+from dotenv import load_dotenv
 
-TOKEN = '6625778795:AAEkvLSDlu2WayMyFRqpw1CkK_sxoxR2Pzk'  # Токен бота
+
+load_dotenv('TOKEN.env') # Загрузка файла с чувствительными данными
+
+TOKEN = os.getenv('TOKEN')
 ABOUT_BOT = 'Этот бот даёт возможность создать напоминание' \
             ' для любого дня недели в определенное время'
 DATA = 'Database\\users.db'
@@ -24,8 +29,8 @@ def send_menu(message):
     [keyboard.add(i) for i in buttons]
 
     text_main_menu = f'Привет {message.from_user.first_name}, здесь находится меню бота\n \n' \
-                '/settings  --  Настройка уведомлений\n' \
-                '/help  --  Информация о боте'
+                      '/settings  --  Настройка уведомлений\n' \
+                      '/help  --  Информация о боте'
 
     bot.send_message(message.chat.id, text_main_menu, reply_markup=keyboard)
 
@@ -44,7 +49,7 @@ def send_settings(message):
         has_all_commands = True
 
         ... #список всех оповещений
-    else:                                                                                # Пользователя нет в базе данных
+    else:                                                     # Пользователя нет в базе данных
         DB.add_user_to_users(message.chat.id)
 
     #Кнопки на экране
@@ -88,7 +93,7 @@ def create_notification(message):
 
     if user_in_data and have_notification: # есть напоминания
         has_all_commands = True
-    elif user_in_data and not(have_notification): # нет нпоминаний
+    elif user_in_data and not(have_notification): # нет напоминаний
         pass
 
 def set_time(message):
