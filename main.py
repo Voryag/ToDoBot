@@ -1,5 +1,6 @@
 import telebot
 import os
+import re
 from telebot import types
 from db import Database
 from dotenv import load_dotenv
@@ -9,7 +10,7 @@ load_dotenv('TOKEN.env') # Загрузка файла с чувствитель
 
 TOKEN = os.getenv('TOKEN')
 ABOUT_BOT = 'Этот бот даёт возможность создать напоминание' \
-            ' для любого дня недели в определенное время'
+            ' для любого дня недели в заданное вами время'
 DATA = 'Database\\users.db'
 ROW_WIDTH = 1 # Количество кнопок в строке
 MAX_NOTIFICATIONS = 15 # Максимальное количество оповещений
@@ -58,7 +59,7 @@ def send_settings(message):
     delete_notification_button = types.KeyboardButton('/delete')
 
     if has_all_commands:
-        settings_menu = 'Вам доступны следующие команды:\n \n' \
+        settings_menu = 'Вам доступны следующие команды :\n \n' \
                         '/create  --  создать напоминание\n' \
                         '/edit  --  изменить напоминание\n' \
                         '/delete  --  удалить напоминание'
@@ -67,7 +68,7 @@ def send_settings(message):
 
         ...
     else:
-        settings_menu = 'Вам доступны следующие команды:\n \n' \
+        settings_menu = 'Вам доступны следующие команды :\n \n' \
                         '/create  --  создать напоминание\n'
 
         buttons = [create_notification_button]
@@ -88,8 +89,9 @@ def create_notification(message):
     have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
 
     if have_notification == False:
-        bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения:')
+        bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения ̲(Например 8:30) :')
         bot.register_next_step_handler(message, set_time)
+        return
 
     if user_in_data and have_notification:        # есть напоминания
         all_commands = ['create', 'edit', 'delete']
@@ -98,20 +100,32 @@ def create_notification(message):
 
     if message.text in all_commands: # Проверка на доступные пользователю комманды
         if message.text == 'create':
-            bot.send_message(message.chat.id, 'Вы можете выбрать следующее время: \n \n' # Высылается весь список, когда можно отправить оповещение
+            bot.send_message(message.chat.id, 'Вы можете выбрать следующии дни: \n \n' # Высылается весь список, когда можно отправить оповещение
                                               'Понедельник, Вторник, Среда, Четверг, Пятница, Суббота, Воскресенье, Каждый день')
             bot.register_next_step_handler(message, add_notification)
-            DB.add_notification_to_notifications(message.chat.id, message.text)
+
     else:
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
 
 def add_notification(message):
-    pass
+    DB = Database(DATA)
+
+    days = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Каждый день')
+
+    DB.add_notification_to_notifications(message.chat.id, message.text, )
 
 def set_time(message):
     DB = Database(DATA)
 
-    DB.add_time_to_users(message.chat.id, message.text)
+    pattern = r'^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$' # паттерн для проверки времени
+
+    # Проверка на исключения
+    if re.match(pattern, message.text):
+        DB.add_time_to_users(message.chat.id, message.text)
+        bot.send_message(message.chat.id, 'Время успешно поставлено')
+    else:
+        bot.send_message(message.chat.id, 'Вы неправильно ввели время, попробуйте еще раз :')
+        bot.register_next_step_handler(message, set_time)
 
 
 @bot.message_handler(commands=['help'])
