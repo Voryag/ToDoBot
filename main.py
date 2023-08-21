@@ -15,6 +15,7 @@ DATA = 'Database\\users.db'
 DAYS = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Каждый день')
 ROW_WIDTH = 1 # Количество кнопок в строке
 MAX_NOTIFICATIONS = 15 # Максимальное количество оповещений
+MAX_OF_SIZE_NOTIFICATION = 150 # Максимальное количество символов в оповещении
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -89,21 +90,19 @@ def create_notification(message):
     user_in_data = DB.user_exists(message.chat.id)
     have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
     have_time = bool(DB.get_time(message.chat.id))
-    print(have_time)
 
     if not(have_notification) and not(have_time): # Выполняется в случае, если у пользователя нет оповещений и нет времени для них
         bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения (Например 8:30) :')
         bot.register_next_step_handler(message, set_time)
         return
 
-
     if user_in_data and have_notification:        # есть напоминания
-        all_commands = ['create', 'edit', 'delete']
+        all_commands = ['/create', '/edit', '/delete']
     elif user_in_data and not(have_notification): # нет напоминаний
-        all_commands = ['create']
+        all_commands = ['/create']
 
     if message.text in all_commands: # Проверка на доступные пользователю комманды
-        if message.text == 'create':
+        if message.text == '/create':
             bot.send_message(message.chat.id, 'Вы можете выбрать следующии дни: \n \n' # Высылается весь список, когда можно отправить оповещение
                                               'Понедельник, Вторник, Среда, Четверг, Пятница, Суббота, Воскресенье, Каждый день')
             bot.register_next_step_handler(message, add_notification)
@@ -112,25 +111,34 @@ def create_notification(message):
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
 
 def add_notification(message):
+    def add_text_to_notification(message):
+        DB = Database(DATA)
+
+        # Проверка на исключения
+        if len(message) > MAX_OF_SIZE_NOTIFICATION:
+            bot.send_message(message.chat.id, f'Превышен лимит символов, попробуйте еще раз,\n'
+                                              f'лимит = {MAX_OF_SIZE_NOTIFICATION}')
+            bot.register_next_step_handler(message, add_text_to_notification)
+        else:
+            DB.add_text_to_notifications(message.chat.id, message.text)
+
     DB = Database(DATA)
 
-    days = DAYS
-
-    #Проверка на исключения
-    if message.text not in days:
+    if message.text not in DAYS: # Проверка на исключения
         bot.send_message(message.chat.id, 'Вы ввели неправильный день')
         bot.register_next_step_handler(message, add_notification)
+    else:
+        DB.add_time_to_notifications(message.chat.id, message.text)
+        bot.send_message(message.chat.id, 'Введите текст оповещения')
+        bot.register_next_step_handler(message, add_text_to_notification)
 
-
-    DB.add_notification_to_notifications(message.chat.id, message.text, )
 
 def set_time(message):
     DB = Database(DATA)
 
     pattern = r'^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$' # паттерн для проверки времени
 
-    # Проверка на исключения
-    if re.match(pattern, message.text):
+    if re.match(pattern, message.text): # Проверка на исключения
         DB.add_time_to_users(message.chat.id, message.text)
         bot.send_message(message.chat.id, 'Время успешно поставлено')
     else:
