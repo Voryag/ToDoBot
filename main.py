@@ -12,6 +12,7 @@ TOKEN = os.getenv('TOKEN')
 ABOUT_BOT = 'Этот бот даёт возможность создать напоминание' \
             ' для любого дня недели в заданное вами время'
 DATA = 'Database\\users.db'
+DAYS = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Каждый день')
 ROW_WIDTH = 1 # Количество кнопок в строке
 MAX_NOTIFICATIONS = 15 # Максимальное количество оповещений
 
@@ -87,16 +88,19 @@ def create_notification(message):
 
     user_in_data = DB.user_exists(message.chat.id)
     have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
+    have_time = bool(DB.get_time(message.chat.id))
+    print(have_time)
 
-    if have_notification == False:
-        bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения ̲(Например 8:30) :')
+    if not(have_notification) and not(have_time): # Выполняется в случае, если у пользователя нет оповещений и нет времени для них
+        bot.send_message(message.chat.id, 'Введите время, когда будут отправляться все оповещения (Например 8:30) :')
         bot.register_next_step_handler(message, set_time)
         return
+
 
     if user_in_data and have_notification:        # есть напоминания
         all_commands = ['create', 'edit', 'delete']
     elif user_in_data and not(have_notification): # нет напоминаний
-        all_commands = ['delete']
+        all_commands = ['create']
 
     if message.text in all_commands: # Проверка на доступные пользователю комманды
         if message.text == 'create':
@@ -110,7 +114,13 @@ def create_notification(message):
 def add_notification(message):
     DB = Database(DATA)
 
-    days = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Каждый день')
+    days = DAYS
+
+    #Проверка на исключения
+    if message.text not in days:
+        bot.send_message(message.chat.id, 'Вы ввели неправильный день')
+        bot.register_next_step_handler(message, add_notification)
+
 
     DB.add_notification_to_notifications(message.chat.id, message.text, )
 
