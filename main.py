@@ -103,8 +103,11 @@ def create_notification(message):
 
     if message.text in all_commands: # Проверка на доступные пользователю комманды
         if message.text == '/create':
+            days = ', '.join(map(str, DAYS))
             bot.send_message(message.chat.id, 'Вы можете выбрать следующии дни: \n \n' # Высылается весь список, когда можно отправить оповещение
-                                              'Понедельник, Вторник, Среда, Четверг, Пятница, Суббота, Воскресенье, Каждый день')
+                                              f'{days} \n \n'
+                                              'Причем, если вы хотите выбрать понедельник и субботу, то напишите так: \n'
+                                              'Понедельник Пятница или понедельник пятница')
             bot.register_next_step_handler(message, add_notification)
 
     else:
@@ -115,22 +118,27 @@ def add_notification(message):
         DB = Database(DATA)
 
         # Проверка на исключения
-        if len(message) > MAX_OF_SIZE_NOTIFICATION:
-            bot.send_message(message.chat.id, f'Превышен лимит символов, попробуйте еще раз,\n'
+        if len(message.text) > MAX_OF_SIZE_NOTIFICATION:
+            bot.send_message(message.chat.id, f'Превышен лимит символов, попробуйте еще раз,\n' 
                                               f'лимит = {MAX_OF_SIZE_NOTIFICATION}')
             bot.register_next_step_handler(message, add_text_to_notification)
         else:
             DB.add_text_to_notifications(message.chat.id, message.text)
 
+    def increase_the_notification_quantity(message):
+        pass
+
+    for word in message.text.split(' '): # Проверка на исключения
+        if word.capitalize() not in DAYS:
+            bot.send_message(message.chat.id, 'Вы ввели неправильный день, попробуйте еще раз :')
+            bot.register_next_step_handler(message, add_notification)
+            return
+
     DB = Database(DATA)
 
-    if message.text not in DAYS: # Проверка на исключения
-        bot.send_message(message.chat.id, 'Вы ввели неправильный день')
-        bot.register_next_step_handler(message, add_notification)
-    else:
-        DB.add_time_to_notifications(message.chat.id, message.text)
-        bot.send_message(message.chat.id, 'Введите текст оповещения')
-        bot.register_next_step_handler(message, add_text_to_notification)
+    DB.add_day_to_notifications(message.chat.id, message.text)
+    bot.send_message(message.chat.id, 'Введите текст оповещения :')
+    bot.register_next_step_handler(message, add_text_to_notification)
 
 
 def set_time(message):

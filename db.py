@@ -14,9 +14,9 @@ class Database:
         with self.connection:
             return self.cursor.execute("UPDATE 'users' SET time_for_attention = ? WHERE chat_id = ?", (time_for_attention, chat_id))
 
-    def add_time_to_notifications(self, chat_id, time):
+    def add_day_to_notifications(self, chat_id, day):
         with self.connection:
-            return self.cursor.execute("INSERT INTO 'notifications' (chat_id, time) VALUES (?, ?)", (chat_id, time))
+            return self.cursor.execute("INSERT INTO 'notifications' (chat_id, day) VALUES (?, ?)", (chat_id, day))
 
     def add_text_to_notifications(self, chat_id, text):
         with self.connection:
