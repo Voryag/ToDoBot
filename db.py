@@ -22,10 +22,22 @@ class Database:
         with self.connection:
             return self.cursor.execute("UPDATE 'notifications' SET text = ? WHERE chat_id = ?", (chat_id, text))
 
+    def add_notification_to_notification(self, chat_id, text, day):
+        with self.connection:
+            return self.cursor.execute("INSERT INTO 'notifications' (chat_id, text, day) VALUES (?, ?, ?)", (chat_id, text, day))
+
+    def set_new_quantity(self, chat_id, quantity_of_notification):
+        with self.connection:
+            return self.cursor.execute("UPDATE 'users' SET quantity_of_notification = ? WHERE chat_id = ?", (quantity_of_notification, chat_id))
+
     def user_exists(self, chat_id):
         with self.connection:
             res = self.cursor.execute("SELECT COUNT(*) FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchall()
             return (res)
+
+    def get_quantity_of_notifications(self, chat_id, ):
+        with self.connection:
+            return self.cursor.execute("SELECT quantity_of_notification FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchone()[0]
 
     def get_time(self, chat_id):
         with self.connection:

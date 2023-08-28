@@ -114,19 +114,25 @@ def create_notification(message):
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
 
 def add_notification(message):
-    def add_text_to_notification(message):
+    def get_text(message, day):
         DB = Database(DATA)
 
-        # Проверка на исключения
-        if len(message.text) > MAX_OF_SIZE_NOTIFICATION:
+        if len(message.text) > MAX_OF_SIZE_NOTIFICATION: # Проверка на исключения
             bot.send_message(message.chat.id, f'Превышен лимит символов, попробуйте еще раз,\n' 
                                               f'лимит = {MAX_OF_SIZE_NOTIFICATION}')
-            bot.register_next_step_handler(message, add_text_to_notification)
+            bot.register_next_step_handler(message, get_text)
         else:
-            DB.add_text_to_notifications(message.chat.id, message.text)
+            DB.add_notification_to_notification(message.chat.id, message.text, day)
+            bot.send_message(message.chat.id, 'Оповещение добавлено')
+            increase_the_notification_quantity(message)
+            return
 
     def increase_the_notification_quantity(message):
-        pass
+        DB = Database(DATA)
+
+        quantity = DB.get_quantity_notifiactions(message.chat.id)
+        DB.set_new_quantity(message.chat.id, quantity + 1)
+        return
 
     for word in message.text.split(' '): # Проверка на исключения
         if word.capitalize() not in DAYS:
@@ -134,12 +140,8 @@ def add_notification(message):
             bot.register_next_step_handler(message, add_notification)
             return
 
-    DB = Database(DATA)
-
-    DB.add_day_to_notifications(message.chat.id, message.text)
     bot.send_message(message.chat.id, 'Введите текст оповещения :')
-    bot.register_next_step_handler(message, add_text_to_notification)
-
+    bot.register_next_step_handler(message, get_text, message.text)
 
 def set_time(message):
     DB = Database(DATA)
