@@ -12,9 +12,9 @@ TOKEN = os.getenv('TOKEN')
 ABOUT_BOT = 'Этот бот даёт возможность создать напоминание' \
             ' для любого дня недели в заданное вами время'
 DATA = 'Database\\users.db'
-DAYS = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье', 'Каждый день')
+DAYS = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 ROW_WIDTH = 1 # Количество кнопок в строке
-MAX_NOTIFICATIONS = 15 # Максимальное количество оповещений
+MAX_NOTIFICATIONS = 5 # Максимальное количество оповещений
 MAX_OF_SIZE_NOTIFICATION = 150 # Максимальное количество символов в оповещении
 
 bot = telebot.TeleBot(TOKEN)
@@ -45,7 +45,10 @@ def send_settings(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=ROW_WIDTH)
 
     has_all_commands = False
-    have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
+    try:
+        have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
+    except:
+        have_notification = False
 
     #Проверка юзера на соответствие к базе данных
     if DB.user_exists(message.chat.id) and have_notification: # Пользователь есть в базе данных
@@ -87,7 +90,6 @@ def create_notification(message):
         bot.send_message(message.chat.id, 'У вас превышен лимит напоминаний')
         return
 
-    user_in_data = DB.user_exists(message.chat.id)
     have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
     have_time = bool(DB.get_time(message.chat.id))
 
@@ -96,20 +98,13 @@ def create_notification(message):
         bot.register_next_step_handler(message, set_time)
         return
 
-    if user_in_data and have_notification:        # есть напоминания
-        all_commands = ['/create', '/edit', '/delete']
-    elif user_in_data and not(have_notification): # нет напоминаний
-        all_commands = ['/create']
-
-    if message.text in all_commands: # Проверка на доступные пользователю комманды
-        if message.text == '/create':
-            days = ', '.join(map(str, DAYS))
-            bot.send_message(message.chat.id, 'Вы можете выбрать следующии дни: \n \n' # Высылается весь список, когда можно отправить оповещение
-                                              f'{days} \n \n'
-                                              'Причем, если вы хотите выбрать понедельник и субботу, то напишите так: \n'
-                                              'Понедельник Пятница или понедельник пятница')
-            bot.register_next_step_handler(message, add_notification)
-
+    if message.text == '/create':
+        days = ', '.join(map(str, DAYS))
+        bot.send_message(message.chat.id, 'Вы можете выбрать следующии дни для вашего оповещения: \n \n' # Высылается весь список, когда можно отправить оповещение
+                                          f'{days} \n \n'
+                                          'Причем, если вы хотите выбрать понедельник и субботу, то напишите так: \n'
+                                          'Понедельник Пятница или понедельник пятница')
+        bot.register_next_step_handler(message, add_notification)
     else:
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
 
@@ -151,9 +146,21 @@ def set_time(message):
     if re.match(pattern, message.text): # Проверка на исключения
         DB.add_time_to_users(message.chat.id, message.text)
         bot.send_message(message.chat.id, 'Время успешно поставлено')
+        bot.send_message(message.chat.id, 'Введите еще раз команду: /create')
+        return
     else:
         bot.send_message(message.chat.id, 'Вы неправильно ввели время, попробуйте еще раз :')
         bot.register_next_step_handler(message, set_time)
+
+
+@bot.message_handler(commands=['edit'])
+def edit_notification(message):
+    pass
+
+
+@bot.message_handler(commands=['delete'])
+def delete_notification(message):
+    pass
 
 
 @bot.message_handler(commands=['help'])
