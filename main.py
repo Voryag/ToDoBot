@@ -19,6 +19,20 @@ MAX_OF_SIZE_NOTIFICATION = 150 # Максимальное количество �
 
 bot = telebot.TeleBot(TOKEN)
 
+def has_all_commands(message):
+    DB = Database(DATA)
+
+    return bool(DB.get_quantity_notifiactions(message.chat.id))
+
+def get_all_notifications(message):
+    DB = Database(DATA)
+
+    all_notifications = DB.get_all_notifications(message.chat.id)
+    list = 'Список всех ваших уведомлений (id, text, day): \n \n'
+    for notification in all_notifications:
+        list = list + '     '.join(notification) + '\n'
+
+    return list
 
 # МЕНЮ
 @bot.message_handler(commands=['start'])
@@ -45,6 +59,7 @@ def send_settings(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=ROW_WIDTH)
 
     has_all_commands = False
+
     try:
         have_notification = bool(DB.get_quantity_notifiactions(message.chat.id))
     except:
@@ -80,6 +95,9 @@ def send_settings(message):
 
     [keyboard.add(i) for i in buttons]
     bot.send_message(message.chat.id, settings_menu, reply_markup=keyboard)
+
+    if DB.get_quantity_notifiactions(message.chat.id) > 0: # Отправка списка всех оповещений для пользователя
+        bot.send_message(message.chat.id, get_all_notifications(message))
 
 
 @bot.message_handler(commands=['create'])
@@ -155,12 +173,20 @@ def set_time(message):
 
 @bot.message_handler(commands=['edit'])
 def edit_notification(message):
-    pass
+    if has_all_commands(message) == False:
+        bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
+        return
+
+    ...
 
 
 @bot.message_handler(commands=['delete'])
 def delete_notification(message):
-    pass
+    if has_all_commands(message) == False:
+        bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
+        return
+
+    ...
 
 
 @bot.message_handler(commands=['help'])

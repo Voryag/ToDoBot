@@ -35,7 +35,7 @@ class Database:
             res = self.cursor.execute("SELECT COUNT(*) FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchall()
             return (res)
 
-    def get_quantity_of_notifications(self, chat_id, ):
+    def get_quantity_of_notifications(self, chat_id):
         with self.connection:
             return self.cursor.execute("SELECT quantity_of_notification FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchone()[0]
 
@@ -43,6 +43,10 @@ class Database:
         with self.connection:
             return self.cursor.execute("SELECT time_for_attention FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchone()[0]
 
-    def get_quantity_notifiactions(self, chat_id) -> int:
+    def get_quantity_notifiactions(self, chat_id):
         with self.connection:
             return self.cursor.execute("SELECT quantity_of_notification FROM 'users' WHERE chat_id = ?", (chat_id,)).fetchone()[0]
+
+    def get_all_notifications(self, chat_id):
+        with self.connection:
+            return self.cursor.execute("SELECT id, text, day FROM 'notifications' WHERE chat_id = ?", (chat_id,)).fetchall()
