@@ -29,8 +29,8 @@ def get_all_notifications(message):
 
     all_notifications = DB.get_all_notifications(message.chat.id)
     list = 'Список всех ваших уведомлений (id, text, day): \n \n'
-    for notification in all_notifications:
-        list = list + '     '.join(notification) + '\n'
+    for n in all_notifications:
+        list = list + (str(n[0]) + '      ' + n[1] + '      ' + n[2]) + '\n'
 
     return list
 
@@ -171,22 +171,33 @@ def set_time(message):
         bot.register_next_step_handler(message, set_time)
 
 
-@bot.message_handler(commands=['edit'])
-def edit_notification(message):
-    if has_all_commands(message) == False:
-        bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
-        return
-
-    ...
-
-
 @bot.message_handler(commands=['delete'])
 def delete_notification(message):
     if has_all_commands(message) == False:
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
         return
 
-    ...
+    bot.send_message(message.chat.id, get_all_notifications(message))
+    bot.send_message(message.chat.id, 'Введите id вашего оповещения для удаления :')
+    bot.register_next_step_handler(message, del_notification)
+
+def del_notification(message):
+    DB = Database(DATA)
+
+    chat_id = message.chat.id
+    notification_id = message.text
+    quantity = DB.get_quantity_notifiactions(message.chat.id)
+    user_ids = [str(i[0]) for i in DB.get_id_of_all_notifications(chat_id)]
+
+    if notification_id in user_ids:
+        #DB.del_notification(notification_id)
+        DB.set_new_quantity(message.chat.id, quantity - 1)
+        bot.send_message(message.chat.id, 'Оповещение успешно удалено')
+        return
+    else:
+        #print(user_ids)
+        bot.send_message(message.chat.id, 'Введите id из списка')
+        bot.register_next_step_handler(message, del_notification)
 
 
 @bot.message_handler(commands=['help'])

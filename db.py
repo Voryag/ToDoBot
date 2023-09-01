@@ -50,3 +50,11 @@ class Database:
     def get_all_notifications(self, chat_id):
         with self.connection:
             return self.cursor.execute("SELECT id, text, day FROM 'notifications' WHERE chat_id = ?", (chat_id,)).fetchall()
+
+    def get_id_of_all_notifications(self, chat_id):
+        with self.connection:
+            return self.cursor.execute("SELECT id FROM 'notifications' WHERE chat_id = ?", (chat_id,)).fetchall()
+
+    def del_notification(self, id):
+        with self.connection:
+            return self.cursor.execute("DELETE FROM 'notifications' WHERE id = ?", (id,))
