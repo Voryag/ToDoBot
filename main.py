@@ -34,15 +34,15 @@ def get_all_notifications(message):
 
     return list
 
-# МЕНЮ
-@bot.message_handler(commands=['start'])
+
+@bot.message_handler(commands=['start']) # Меню
 def send_menu(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=ROW_WIDTH)
 
     # Кнопки на экране
     information_button = types.KeyboardButton('/settings')
     help_button = types.KeyboardButton('/help')
-    buttons = (help_button,  information_button)
+    buttons = (information_button, help_button)
     [keyboard.add(i) for i in buttons]
 
     text_main_menu = f'Привет {message.from_user.first_name}, здесь находится меню бота\n \n' \
@@ -52,8 +52,8 @@ def send_menu(message):
     bot.send_message(message.chat.id, text_main_menu, reply_markup=keyboard)
 
 
-# НАСТРОЙКИ
-@bot.message_handler(commands=['settings'])
+
+@bot.message_handler(commands=['settings']) # Настройки
 def send_settings(message):
     DB = Database(DATA)
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=ROW_WIDTH)
@@ -68,8 +68,6 @@ def send_settings(message):
     #Проверка юзера на соответствие к базе данных
     if DB.user_exists(message.chat.id) and have_notification: # Пользователь есть в базе данных
         has_all_commands = True
-
-        ... #список всех оповещений
     else:                                                     # Пользователя нет в базе данных
         DB.add_user_to_users(message.chat.id)
 
@@ -98,6 +96,7 @@ def send_settings(message):
 
     if DB.get_quantity_notifiactions(message.chat.id) > 0: # Отправка списка всех оповещений для пользователя
         bot.send_message(message.chat.id, get_all_notifications(message))
+
 
 
 @bot.message_handler(commands=['create'])
@@ -147,6 +146,7 @@ def add_notification(message):
         DB.set_new_quantity(message.chat.id, quantity + 1)
         return
 
+
     for word in message.text.split(' '): # Проверка на исключения
         if word.capitalize() not in DAYS:
             bot.send_message(message.chat.id, 'Вы ввели неправильный день, попробуйте еще раз :')
@@ -173,7 +173,7 @@ def set_time(message):
 
 @bot.message_handler(commands=['delete'])
 def delete_notification(message):
-    if has_all_commands(message) == False:
+    if has_all_commands(message) == False: # Выполняется, если у пользователя нет доступа к такой команде
         bot.send_message(message.chat.id, 'У вас нет доступа к такой комманде')
         return
 
@@ -189,13 +189,12 @@ def del_notification(message):
     quantity = DB.get_quantity_notifiactions(message.chat.id)
     user_ids = [str(i[0]) for i in DB.get_id_of_all_notifications(chat_id)]
 
-    if notification_id in user_ids:
-        #DB.del_notification(notification_id)
+    if notification_id in user_ids: # Проверка на то что, есть ли id оповещения у пользователя в списке
+        DB.del_notification(notification_id)
         DB.set_new_quantity(message.chat.id, quantity - 1)
         bot.send_message(message.chat.id, 'Оповещение успешно удалено')
         return
     else:
-        #print(user_ids)
         bot.send_message(message.chat.id, 'Введите id из списка')
         bot.register_next_step_handler(message, del_notification)
 
